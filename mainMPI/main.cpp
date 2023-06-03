@@ -70,6 +70,25 @@ int main(int argc, char* argv[])
     printf("mayor en p%d = ", rank);
     printf("%d\n", mayor);
 
+    // 7) Obtener los mayores de cada subvector y realizar la suma en el proceso 0
+
+    // Crear un vector para almacenar los mayores de cada subvector
+    std::vector<int> mayores(size);
+
+    // Recopilar los mayores de cada subvector en el proceso 0
+    MPI_Gather(&mayor, 1, MPI_INT, mayores.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank == 0)
+    {
+        // Realizar la suma de los 4 mayores en el proceso 0
+        int sumaMayores = 0;
+        for (int i = 0; i < size; ++i)
+        {
+            sumaMayores += mayores[i];
+        }
+        printf("\nSuma total: %d\n", sumaMayores);
+    }
+
     MPI_Finalize();
 
     return EXIT_SUCCESS;
