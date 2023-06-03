@@ -9,15 +9,15 @@
 
 using namespace std;
 
-std::vector<int> leerVector(const std::string& filename);
-std::vector<int> dividirVector(const std::vector<int>& vector, int rank);
+std::vector<int> leerVector(const std::string& filename);   // funcion que lee el vector de un archivo .txt
+std::vector<int> dividirVector(const std::vector<int>& vector, int rank);   //funcion que divide el vector y asigna los subvectores a cada proceso
 
 int main(int argc, char* argv[])
 {
     MPI_Init(&argc, &argv);
 
-    int rank;  // Declare the rank variable
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // Get the rank of each process
+    int rank;  // Rank del proceso
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // Obtener el rank de cada proceso
 
     // 1) Condicion de los 4 procesos
     int size;
@@ -28,8 +28,9 @@ int main(int argc, char* argv[])
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
-    std::vector<int> vectorAsignado;
+    std::vector<int> vectorAsignado;    // sub vector que se asignara a cada proceso en el paso 4
 
+    // P0 es el encargado de leer el archivo y asignar los subvectores a cada proceso, incluido asi mismo.
     if (rank == 0)
     {
         // 2) Leer el vector del archivo
@@ -44,18 +45,21 @@ int main(int argc, char* argv[])
         // 5) Recibir la parte correspondiente del vector desde el proceso 0
         int chunkSize;
         MPI_Bcast(&chunkSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        std::vector<int> localVector(chunkSize);
-        MPI_Scatter(nullptr, chunkSize, MPI_INT, localVector.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
+        std::vector<int> vectorLocal(chunkSize);
+        MPI_Scatter(nullptr, chunkSize, MPI_INT, vectorLocal.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
 
         // Imprimir los elementos del vector en cada proceso
         printf("P%d: ", rank);
         for (int i = 0; i < chunkSize; ++i)
         {
-            printf("%d ", localVector[i]);
+            printf("%d ", vectorLocal[i]);
         }
         printf("\n");
-        vectorAsignado = localVector;
+        vectorAsignado = vectorLocal;
     }
+
+    // Barrera para asegurar que cada proceso tiene un subvector
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // 6) En cada uno de los 4 Procesos se determina el mayor de cada subvector
 
@@ -70,7 +74,10 @@ int main(int argc, char* argv[])
     printf("mayor en p%d = ", rank);
     printf("%d\n", mayor);
 
-    // 7) Obtener los mayores de cada subvector y realizar la suma en el proceso 0
+    // 7) Obtener los mayores de cada subvector y realizar la suma en P0
+    
+    // Barrera para asegurar que cada proceso tiene el mayor de su subvector
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Crear un vector para almacenar los mayores de cada subvector
     std::vector<int> mayores(size);
@@ -124,7 +131,7 @@ std::vector<int> leerVector(const std::string& filename)
         printf("El largo del vector debe ser múltiplo de 4 y mayor que 4.\n");
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
-
+    // Lectura del vector que se cargo
     printf("P0\nlee Vector = %d", vector[0]);
     for (int i = 1; i < vector.size(); i++) 
     {
@@ -138,7 +145,7 @@ std::vector<int> dividirVector(const std::vector<int>& vector, int rank)
 {
     printf("divide la informacion\n");
     int size = vector.size();
-    int chunkSize = size / 4;  // Tamaño de cada parte
+    int chunkSize = size / 4;  // Tamaño de cada sub vector
 
     int divisor = 0;
     for (int i = 0; i < size; ++i)
@@ -157,15 +164,15 @@ std::vector<int> dividirVector(const std::vector<int>& vector, int rank)
     MPI_Bcast(&chunkSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Enviar la parte correspondiente a cada proceso
-    std::vector<int> localVector(chunkSize);
-    MPI_Scatter(vector.data(), chunkSize, MPI_INT, localVector.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
+    std::vector<int> vectorLocal(chunkSize);
+    MPI_Scatter(vector.data(), chunkSize, MPI_INT, vectorLocal.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Imprimir los elementos del vector en cada proceso
     printf("P%d: ", rank);
     for (int i = 0; i < chunkSize; ++i)
     {
-        printf("%d ", localVector[i]);
+        printf("%d ", vectorLocal[i]);
     }
     printf("\n");
-    return localVector;
+    return vectorLocal;
 }
