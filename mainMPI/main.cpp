@@ -10,7 +10,7 @@
 using namespace std;
 
 std::vector<int> leerVector(const std::string& filename);
-void dividirVector(const std::vector<int>& vector, int rank);
+std::vector<int> dividirVector(const std::vector<int>& vector, int rank);
 
 int main(int argc, char* argv[])
 {
@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
+    std::vector<int> vectorAsignado;
+
     if (rank == 0)
     {
         // 2) Leer el vector del archivo
@@ -35,7 +37,7 @@ int main(int argc, char* argv[])
         std::vector<int> vector = leerVector(filename); // 3) leerVector verifica que el vector.size sea multiplo y mayor a 4
 
         // 4) Dividir el vector y enviar las partes a los otros procesos
-        dividirVector(vector, rank);
+        vectorAsignado = dividirVector(vector, rank);
     }
     else
     {
@@ -52,10 +54,21 @@ int main(int argc, char* argv[])
             printf("%d ", localVector[i]);
         }
         printf("\n");
+        vectorAsignado = localVector;
     }
 
-    // 6)
-    
+    // 6) En cada uno de los 4 Procesos se determina el mayor de cada subvector
+
+    int mayor = vectorAsignado[0];
+    for (int i = 1; i < vectorAsignado.size(); ++i)
+    {
+        if (mayor < vectorAsignado[i])
+        {
+            mayor = vectorAsignado[i];
+        }
+    }
+    printf("mayor en p%d = ", rank);
+    printf("%d\n", mayor);
 
     MPI_Finalize();
 
@@ -102,7 +115,7 @@ std::vector<int> leerVector(const std::string& filename)
     return vector;
 }
 
-void dividirVector(const std::vector<int>& vector, int rank)
+std::vector<int> dividirVector(const std::vector<int>& vector, int rank)
 {
     printf("divide la informacion\n");
     int size = vector.size();
@@ -135,4 +148,5 @@ void dividirVector(const std::vector<int>& vector, int rank)
         printf("%d ", localVector[i]);
     }
     printf("\n");
+    return localVector;
 }
