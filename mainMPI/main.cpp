@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     int rank;  // Declare the rank variable
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // Get the rank of each process
 
-    // Condicion de los 4 procesos
+    // 1) Condicion de los 4 procesos
     int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     if (size != 4)
@@ -30,16 +30,16 @@ int main(int argc, char* argv[])
 
     if (rank == 0)
     {
-        // Read vector from file
+        // 2) Leer el vector del archivo
         std::string filename = "vector.txt";
-        std::vector<int> vector = leerVector(filename);
+        std::vector<int> vector = leerVector(filename); // 3) leerVector verifica que el vector.size sea multiplo y mayor a 4
 
-        // Dividir el vector y enviar las partes a los otros procesos
+        // 4) Dividir el vector y enviar las partes a los otros procesos
         dividirVector(vector, rank);
     }
     else
     {
-        // Recibir la parte correspondiente del vector desde el proceso 0
+        // 5) Recibir la parte correspondiente del vector desde el proceso 0
         int chunkSize;
         MPI_Bcast(&chunkSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
         std::vector<int> localVector(chunkSize);
@@ -53,6 +53,9 @@ int main(int argc, char* argv[])
         }
         printf("\n");
     }
+
+    // 6)
+    
 
     MPI_Finalize();
 
