@@ -91,7 +91,8 @@ std::vector<int> leerVector(const std::string& filename)
     }
 
     printf("P0\nlee Vector = %d", vector[0]);
-    for (int i = 1; i < vector.size(); i++) {
+    for (int i = 1; i < vector.size(); i++) 
+    {
         printf(";%d", vector[i]);
     }
     printf("\n");
