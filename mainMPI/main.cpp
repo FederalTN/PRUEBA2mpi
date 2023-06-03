@@ -46,16 +46,13 @@ int main(int argc, char* argv[])
         MPI_Scatter(nullptr, chunkSize, MPI_INT, localVector.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
 
         // Imprimir los elementos del vector en cada proceso
-        printf("Proceso %d: ", rank);
+        printf("P%d: ", rank);
         for (int i = 0; i < chunkSize; ++i)
         {
             printf("%d ", localVector[i]);
         }
         printf("\n");
     }
-
-
-    printf("\nbien hecho\n");
 
     MPI_Finalize();
 
@@ -93,13 +90,32 @@ std::vector<int> leerVector(const std::string& filename)
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
+    printf("P0\nlee Vector = %d", vector[0]);
+    for (int i = 1; i < vector.size(); i++) {
+        printf(";%d", vector[i]);
+    }
+    printf("\n");
     return vector;
 }
 
 void dividirVector(const std::vector<int>& vector, int rank)
 {
+    printf("divide la informacion\n");
     int size = vector.size();
     int chunkSize = size / 4;  // Tamaño de cada parte
+
+    int divisor = 0;
+    for (int i = 0; i < size; ++i)
+    {   
+        if (divisor == chunkSize)
+        {
+            printf("/ ");
+            divisor=0;
+        }
+        printf("%d ", vector[i]);
+        divisor++;
+    }
+    printf("\n\n");
 
     // Enviar el tamaño de la parte a todos los procesos
     MPI_Bcast(&chunkSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -109,7 +125,7 @@ void dividirVector(const std::vector<int>& vector, int rank)
     MPI_Scatter(vector.data(), chunkSize, MPI_INT, localVector.data(), chunkSize, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Imprimir los elementos del vector en cada proceso
-    printf("Proceso %d: ", rank);
+    printf("P%d: ", rank);
     for (int i = 0; i < chunkSize; ++i)
     {
         printf("%d ", localVector[i]);
